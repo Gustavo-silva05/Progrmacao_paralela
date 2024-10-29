@@ -1,0 +1,16 @@
+Compilar o programa em um terminal:
+
+make
+
+
+Utilizar o programa:
+
+Serão necessário dois terminais para testar o programa.
+
+Em um terminal, inicialize o servidor utilizando:
+
+./servidor
+
+Em outro terminal, inicialize o cliente: 
+
+./cliente localhost Maria
