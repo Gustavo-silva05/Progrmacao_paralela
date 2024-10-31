@@ -40,38 +40,39 @@ func (s *Servidor) ObtemSaldo(nome string, saldo *float64) error {
 	return fmt.Errorf("Aluno %s não encontrado", nome)
 }
 
-func (s *Servidor) AbrirConta(conta Conta, resposta *string) error {
-
-	if conta.Saldo < 0 {
-		*resposta = "Erro saldo inicial invalido"
-
-	} else {
-		// Adiciona a nova conta à lista de contas
-		s.contas = append(s.contas, conta)
-		*resposta = "Conta criada com sucesso!"
+func (s *Servidor) AbrirConta(nome string, resposta *string) error {
+	conta := Conta{
+		Nome: nome,
+		Saldo: 0.0,
 	}
+	s.contas = append(s.contas, conta)
+	fmt.Println("Conta criada para ", nome)
+	*resposta = fmt.Sprintf("Conta de %s criada com sucesso!", nome)
 	return nil
 }
-func (s *Servidor) FecharConta(conta Conta, resposta *string) error {
+
+func (s *Servidor) FecharConta(nome string, resposta *string) error {
 
 	for i, a := range s.contas {
-		if a.Nome == conta.Nome {
+		if a.Nome == nome {
 			// Remove a conta da lista
-			*resposta = fmt.Sprintf("Conta removida com sucesso e saldo devolvido = %f", a.Saldo)
+			fmt.Println("Conta excluida de ", nome)
+			*resposta = fmt.Sprintf("Conta removida com sucesso e saldo devolvido = %g", a.Saldo)
 			s.contas = append(s.contas[:i], s.contas[i+1:]...)
 			return nil
 		}
 	}
 	*resposta = "Conta não encontrada."
-	return fmt.Errorf("conta com nome %s não encontrada", conta.Nome)
+	return fmt.Errorf("conta com nome %s não encontrada", nome)
 }
 
 func (s *Servidor) Deposito(conta Conta, resposta *string) error {
 
-	for _, a := range s.contas {
+	for i, a := range s.contas {
 		if a.Nome == conta.Nome {
-			a.Saldo += conta.Saldo
-			*resposta = fmt.Sprintf("Deposito feito, novo de %s saldo = %f", conta.Nome, a.Saldo)
+			s.contas[i].Saldo += conta.Saldo
+			fmt.Println("Desposito Realizado com sucesso ")
+			*resposta = fmt.Sprintf("Deposito de %g feito, novo saldo de %s = %g", conta.Saldo, conta.Nome, s.contas[i].Saldo)
 			return nil
 		}
 	}
@@ -81,10 +82,11 @@ func (s *Servidor) Deposito(conta Conta, resposta *string) error {
 
 func (s *Servidor) Saque(conta Conta, resposta *string) error {
 
-	for _, a := range s.contas {
+	for i, a := range s.contas {
 		if a.Nome == conta.Nome {
-			a.Saldo -= conta.Saldo
-			*resposta = fmt.Sprintf("Saque feito, novo de %s saldo = %f", conta.Nome, a.Saldo)
+			s.contas[i].Saldo -= conta.Saldo
+			fmt.Println("Saque Realizado com sucesso ")
+			*resposta = fmt.Sprintf("Saque de %g feito, novo saldo de %s = %g", conta.Saldo ,conta.Nome, s.contas[i].Saldo)
 			return nil
 		}
 	}

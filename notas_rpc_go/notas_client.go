@@ -1,12 +1,19 @@
 package main
 
 import (
-	"bufio"
+	// "bufio"
 	"fmt"
 	"net/rpc"
 	"os"
-	"strconv"
+	// "strconv"
+	"sync"
 )
+var contas_novas = []string {"Bruno","Sofia","Izis",}
+var contas_antigas = []string {"Maria","Pedro","Joao",}
+
+var mutex sync.Mutex
+// var wg sync.WaitGroup
+
 
 type Conta struct {
 	Nome  string
@@ -28,8 +35,46 @@ func main() {
 		return
 	}
 	defer client.Close()
+	for i:=0; i<3 ; i++{
+		var resposta string
+		err = client.Call("Servidor.AbrirConta", contas_novas[i], &resposta)
+		if err != nil {
+			fmt.Println("Erro ao abrir conta:", err)
+		}else {
+			fmt.Println("Resposta do servidor:", resposta)
+		}
+	} 
+	for i:=0; i<3 ; i++{
+		var resposta string
+		err = client.Call("Servidor.FecharConta", contas_antigas[i], &resposta)
+		if err != nil {
+			fmt.Println("Erro ao abrir conta:", err)
+		}else {
+			fmt.Println("Resposta do servidor:", resposta)
+		}
+	} 
+	for i:=0; i<3 ; i++{
+		var resposta string
+		conta := Conta{Nome: contas_novas[i], Saldo: 500.0,}
+		err = client.Call("Servidor.Deposito", conta, &resposta)
+		if err != nil {
+			fmt.Println("Erro ao abrir conta:", err)
+		}else {
+			fmt.Println("Resposta do servidor:", resposta)
+		}
+	} 
+	for i:=0; i<3 ; i++{
+		var resposta string
+		conta := Conta{Nome: contas_novas[i], Saldo: 100.0,}
+		err = client.Call("Servidor.Saque", conta, &resposta)
+		if err != nil {
+			fmt.Println("Erro ao abrir conta:", err)
+		}else {
+			fmt.Println("Resposta do servidor:", resposta)
+		}
+	} 
 
-	reader := bufio.NewReader(os.Stdin)
+	/*reader := bufio.NewReader(os.Stdin)
 
 	for {
 		fmt.Println("\nMenu:")
@@ -164,5 +209,5 @@ func main() {
 		default:
 			fmt.Println("Opção inválida. Tente novamente.")
 		}
-	}
+	}*/
 }
