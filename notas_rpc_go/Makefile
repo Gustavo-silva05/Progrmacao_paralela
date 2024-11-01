@@ -4,4 +4,4 @@ all:
 	./notas_server
 
 clean:
-	rm -f notas_server notas_client
+	del *.exe

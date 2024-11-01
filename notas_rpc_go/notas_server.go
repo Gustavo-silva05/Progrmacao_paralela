@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"net"
 	"net/rpc"
+	"sync"
 )
+
+var mutex sync.Mutex
 
 // Estrutura para representar um aluno
 type Conta struct {
@@ -42,7 +45,7 @@ func (s *Servidor) ObtemSaldo(nome string, saldo *float64) error {
 
 func (s *Servidor) AbrirConta(nome string, resposta *string) error {
 	conta := Conta{
-		Nome: nome,
+		Nome:  nome,
 		Saldo: 0.0,
 	}
 	s.contas = append(s.contas, conta)
@@ -55,11 +58,14 @@ func (s *Servidor) FecharConta(nome string, resposta *string) error {
 
 	for i, a := range s.contas {
 		if a.Nome == nome {
+			mutex.Lock()
 			// Remove a conta da lista
 			fmt.Println("Conta excluida de ", nome)
 			*resposta = fmt.Sprintf("Conta removida com sucesso e saldo devolvido = %g", a.Saldo)
 			s.contas = append(s.contas[:i], s.contas[i+1:]...)
+			mutex.Unlock()
 			return nil
+
 		}
 	}
 	*resposta = "Conta não encontrada."
@@ -70,9 +76,11 @@ func (s *Servidor) Deposito(conta Conta, resposta *string) error {
 
 	for i, a := range s.contas {
 		if a.Nome == conta.Nome {
+			mutex.Lock()
 			s.contas[i].Saldo += conta.Saldo
 			fmt.Println("Desposito Realizado com sucesso ")
 			*resposta = fmt.Sprintf("Deposito de %g feito, novo saldo de %s = %g", conta.Saldo, conta.Nome, s.contas[i].Saldo)
+			mutex.Unlock()
 			return nil
 		}
 	}
@@ -84,9 +92,11 @@ func (s *Servidor) Saque(conta Conta, resposta *string) error {
 
 	for i, a := range s.contas {
 		if a.Nome == conta.Nome {
+			mutex.Lock()
 			s.contas[i].Saldo -= conta.Saldo
 			fmt.Println("Saque Realizado com sucesso ")
-			*resposta = fmt.Sprintf("Saque de %g feito, novo saldo de %s = %g", conta.Saldo ,conta.Nome, s.contas[i].Saldo)
+			*resposta = fmt.Sprintf("Saque de %g feito, novo saldo de %s = %g", conta.Saldo, conta.Nome, s.contas[i].Saldo)
+			mutex.Unlock()
 			return nil
 		}
 	}
