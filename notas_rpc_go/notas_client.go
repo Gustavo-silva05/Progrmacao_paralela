@@ -18,17 +18,9 @@ type Conta struct {
 	Saldo float64
 }
 
-func ABRIR(nome string) {
-	porta := 8973
-	maquina := os.Args[1]
-	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta))
-	if err != nil {
-		fmt.Println("Erro ao conectar ao servidor:", err)
-		return
-	}
-	defer client.Close()
+func ABRIR(nome string, porta int, maquina string, cliente *rpc.Client) {
 	var resposta string
-	err = client.Call("Servidor.AbrirConta", nome, &resposta)
+	var err = cliente.Call("Servidor.AbrirConta", nome, &resposta)
 	if err != nil {
 		fmt.Println("Erro ao abrir conta:", err)
 	} else {
@@ -36,17 +28,9 @@ func ABRIR(nome string) {
 	}
 
 }
-func FECHAR(nome string) {
-	porta := 8973
-	maquina := os.Args[1]
-	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta))
-	if err != nil {
-		fmt.Println("Erro ao conectar ao servidor:", err)
-		return
-	}
-	defer client.Close()
+func FECHAR(nome string, porta int, maquina string, client *rpc.Client) {
 	var resposta string
-	err = client.Call("Servidor.FecharConta", nome, &resposta)
+	var err = client.Call("Servidor.FecharConta", nome, &resposta)
 	if err != nil {
 		fmt.Println("Erro ao fechar conta:", err)
 	} else {
@@ -55,42 +39,26 @@ func FECHAR(nome string) {
 
 }
 
-func DEPOSITO(nome string, id int) {
-	porta := 8973
-	maquina := os.Args[1]
-	conta := Conta{Nome: nome, Saldo: 500.0}
-	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta))
-	if err != nil {
-		fmt.Println("Erro ao conectar ao servidor:", err)
-		return
-	}
-	defer client.Close()
+func DEPOSITO(nome string, id int, porta int, maquina string, client *rpc.Client) {
 	var resposta string
-	err = client.Call("Servidor.Deposito", conta, &resposta)
+	var err = client.Call("Servidor.Deposito", Conta{Nome: nome, Saldo: 200}, &resposta)
 	if err != nil {
 		fmt.Println("Erro no deposito conta:", err)
 	} else {
 		fmt.Println("Resposta do servidor:", resposta)
 	}
+	wg.Done()
 
 }
-func SAQUE(nome string, id int) {
-	porta := 8973
-	maquina := os.Args[1]
-	conta := Conta{Nome: nome, Saldo: 200}
-	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta))
-	if err != nil {
-		fmt.Println("Erro ao conectar ao servidor:", err)
-		return
-	}
-	defer client.Close()
+func SAQUE(nome string, id int, porta int, maquina string, client *rpc.Client) {
 	var resposta string
-	err = client.Call("Servidor.Saque", conta, &resposta)
+	var err = client.Call("Servidor.Saque", Conta{Nome: nome, Saldo: 100}, &resposta)
 	if err != nil {
 		fmt.Println("Erro no saque conta:", err)
 	} else {
 		fmt.Println("Resposta do servidor:", resposta)
 	}
+	wg.Done()
 
 }
 
@@ -99,24 +67,29 @@ func main() {
 		fmt.Println("Uso:", os.Args[0], "<maquina>")
 		return
 	}
+	porta := 8973
+	maquina := os.Args[1]
+	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta))
+	if err != nil {
+		fmt.Println("Erro ao conectar ao servidor:", err)
+		return
+	}
+	defer client.Close()
 
 	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		go ABRIR(contas_novas[i])
+		ABRIR(contas_novas[i], porta, maquina, client)
 	}
 	for i := 0; i < 3; i++ {
 		wg.Add(1)
-		go DEPOSITO(contas_novas[i], i+1)
+		go DEPOSITO(contas_novas[i], i+1, porta, maquina, client)
 	}
 	for i := 0; i < 3; i++ {
 		wg.Add(1)
-		go SAQUE(contas_antigas[i], i+1)
+		go SAQUE(contas_antigas[i], i+1, porta, maquina, client)
 	}
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		go FECHAR(contas_antigas[i])
-	}
-	wg.Done()
 	wg.Wait()
+	for i := 0; i < 3; i++ {
+		FECHAR(contas_antigas[i], porta, maquina, client)
+	}
 
 }
