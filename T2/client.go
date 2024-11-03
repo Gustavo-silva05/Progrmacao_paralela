@@ -7,8 +7,8 @@ import (
 	"sync"
 )
 
-var contas_novas = []string{"Bruno", "Sofia", "Izis"}
-var contas_antigas = []string{"Maria", "Pedro", "Joao"}
+var contas_novas = []string{"Bruno", "Sofia", "Izis", "Enzo", "Carlos", "Gabriel"}
+var contas_antigas = []string{"Maria", "Pedro", "Joao", "Alexandre", "Barbara", "Paulo"}
 
 var wg sync.WaitGroup
 
@@ -86,16 +86,20 @@ func main() {
 	}
 	defer client.Close()
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < len(contas_novas); i++ {
 		ABRIR(contas_novas[i], porta, maquina, client)
 	}
-	for i := 0; i < 3; i++ {
+	for i := 0; i < len(contas_antigas); i++ {
 		wg.Add(1)
 		go DEPOSITO(contas_novas[i], porta, maquina, client)
+		wg.Add(1)
+		go DEPOSITO(contas_antigas[i], porta, maquina, client)
 	}
-	for i := 0; i < 3; i++ {
+	for i := 0; i < len(contas_antigas); i++ {
 		wg.Add(1)
 		go SAQUE(contas_antigas[i], porta, maquina, client)
+		wg.Add(1)
+		go SAQUE(contas_novas[i], porta, maquina, client)
 	}
 	wg.Wait()
 	// for i := 0; i < 3; i++ {

@@ -45,6 +45,13 @@ func (s *Servidor) ObtemSaldo(nome string, resposta *string) error {
 }
 
 func (s *Servidor) AbrirConta(nome string, resposta *string) error {
+	for _, conta := range s.contas {
+		if conta.Nome == nome {
+			fmt.Println("Conta existente para ", nome)
+			*resposta = fmt.Sprintf("Conta com ", nome, "ja existe")
+			return fmt.Errorf("conta com nome %s encontrada", nome)
+		}
+	}
 	conta := Conta{
 		Nome:  nome,
 		Saldo: 0.0,
