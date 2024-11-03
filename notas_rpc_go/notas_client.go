@@ -10,7 +10,6 @@ import (
 var contas_novas = []string{"Bruno", "Sofia", "Izis"}
 var contas_antigas = []string{"Maria", "Pedro", "Joao"}
 
-var mutex sync.Mutex
 var wg sync.WaitGroup
 
 type Conta struct {
@@ -39,7 +38,7 @@ func FECHAR(nome string, porta int, maquina string, client *rpc.Client) {
 
 }
 
-func DEPOSITO(nome string, id int, porta int, maquina string, client *rpc.Client) {
+func DEPOSITO(nome string, porta int, maquina string, client *rpc.Client) {
 	var resposta string
 	var err = client.Call("Servidor.Deposito", Conta{Nome: nome, Saldo: 200}, &resposta)
 	if err != nil {
@@ -50,7 +49,7 @@ func DEPOSITO(nome string, id int, porta int, maquina string, client *rpc.Client
 	wg.Done()
 
 }
-func SAQUE(nome string, id int, porta int, maquina string, client *rpc.Client) {
+func SAQUE(nome string, porta int, maquina string, client *rpc.Client) {
 	var resposta string
 	var err = client.Call("Servidor.Saque", Conta{Nome: nome, Saldo: 100}, &resposta)
 	if err != nil {
@@ -81,11 +80,11 @@ func main() {
 	}
 	for i := 0; i < 3; i++ {
 		wg.Add(1)
-		go DEPOSITO(contas_novas[i], i+1, porta, maquina, client)
+		go DEPOSITO(contas_novas[i], porta, maquina, client)
 	}
 	for i := 0; i < 3; i++ {
 		wg.Add(1)
-		go SAQUE(contas_antigas[i], i+1, porta, maquina, client)
+		go SAQUE(contas_antigas[i], porta, maquina, client)
 	}
 	wg.Wait()
 	for i := 0; i < 3; i++ {
