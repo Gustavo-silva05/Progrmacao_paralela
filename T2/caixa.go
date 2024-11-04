@@ -57,7 +57,7 @@ func main() {
 		fmt.Println("Uso:", os.Args[0], "<maquina>")
 		return
 	}
-	porta := 8973
+	porta := 1234
 	maquina := os.Args[1]
 	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta))
 	if err != nil {

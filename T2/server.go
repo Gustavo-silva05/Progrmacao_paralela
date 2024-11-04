@@ -120,11 +120,11 @@ func (s *Servidor) Saque(conta Conta, resposta *string) error {
 }
 
 func main() {
-	porta := 8973
+	porta := 1234
 	servidor := new(Servidor)
 	servidor.inicializar()
 	rpc.Register(servidor)
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", porta))
+	l, err := net.Listen("tcp", "0.0.0.0:1234") /*("tcp", fmt.Sprintf(":%d", porta))*/
 	if err != nil {
 		fmt.Println("Erro ao iniciar o servidor:", err)
 		return
