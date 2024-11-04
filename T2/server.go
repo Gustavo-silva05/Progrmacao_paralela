@@ -65,7 +65,7 @@ func (s *Servidor) AbrirConta(nome string, resposta *string) error {
 }
 
 func (s *Servidor) FecharConta(nome string, resposta *string) error {
-
+	mutex.Lock()
 	for i, a := range s.contas {
 		if a.Nome == nome {
 			mutex.Lock()
@@ -78,6 +78,7 @@ func (s *Servidor) FecharConta(nome string, resposta *string) error {
 
 		}
 	}
+	mutex.Unlock()
 	*resposta = "Conta não encontrada."
 	return fmt.Errorf("conta com nome %s não encontrada", nome)
 }

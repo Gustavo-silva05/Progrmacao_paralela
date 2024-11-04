@@ -36,6 +36,7 @@ func ABRIR(nome string, porta int, maquina string, cliente *rpc.Client) {
 	} else {
 		fmt.Println("Resposta do servidor:", resposta)
 	}
+	wg.Done()
 
 }
 func FECHAR(nome string, porta int, maquina string, client *rpc.Client) {
