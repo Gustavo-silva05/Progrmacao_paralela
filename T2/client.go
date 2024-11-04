@@ -92,6 +92,7 @@ func main() {
 		wg.Add(1)
 		go ABRIR(contas_novas[i], porta, maquina, client)
 	}
+	wg.Wait()
 	for i := 0; i < len(contas_antigas); i++ {
 		wg.Add(1)
 		go DEPOSITO(contas_novas[i], porta, maquina, client)
