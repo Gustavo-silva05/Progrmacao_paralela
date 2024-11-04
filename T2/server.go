@@ -17,7 +17,8 @@ type Conta struct {
 
 // Estrutura para o servidor
 type Servidor struct {
-	contas []Conta
+	contas              []Conta
+	operacoesRealizadas map[string]string
 }
 
 // Método para inicializar a lista de alunos no servidor
@@ -33,17 +34,25 @@ func (s *Servidor) inicializar() {
 }
 
 // Método remoto que retorna o saldo de um cliente dado o seu nome
-func (s *Servidor) ObtemSaldo(nome string, resposta *string) error {
-	mutex.Lock()
+func (s *Servidor) ObtemSaldo(args []string, resposta *string) error {
+	nome := args[0]
+	idOperacao := args[1]
+
+	if resultado, existe := s.operacoesRealizadas[idOperacao]; existe {
+		*resposta = resultado
+		return nil // Operação já foi processada
+	}
+
+	// mutex.Lock()
 	for _, conta := range s.contas {
 		if conta.Nome == nome {
 			fmt.Println("Saldo verificado para ", nome)
 			*resposta = fmt.Sprintf("Conta de %s com R$ %g", nome, conta.Saldo)
-			mutex.Unlock()
+			// mutex.Unlock()
 			return nil
 		}
 	}
-	mutex.Unlock()
+	// mutex.Unlock()
 	return fmt.Errorf("Aluno %s não encontrado", nome)
 
 }

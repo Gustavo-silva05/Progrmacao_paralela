@@ -5,7 +5,13 @@ import (
 	"net/rpc"
 	"os"
 	"sync"
+
+	"github.com/google/uuid"
 )
+
+func gerarIDOperacao() string {
+	return uuid.New().String()
+}
 
 var contas_novas = []string{"Bruno", "Sofia", "Izis", "Enzo", "Carlos", "Gabriel"}
 var contas_antigas = []string{"Maria", "Pedro", "Joao", "Alexandre", "Barbara", "Paulo"}
@@ -21,6 +27,7 @@ type Conta struct {
 // Metodo de verificação do saldo disponivel para um nome
 func SALDO(nome string, cliente *rpc.Client) {
 	var resposta string
+	args := []string{nome, gerarIDOperacao()}
 	var err = cliente.Call("Servidor.ObtemSaldo", nome, &resposta)
 	if err != nil {
 		fmt.Println("Erro ao ver saldo conta:", err)
