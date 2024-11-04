@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/rpc"
+	"os"
 	"sync"
 )
 
@@ -51,13 +52,13 @@ func SAQUE(nome string, client *rpc.Client) {
 }
 
 func main() {
-	// if len(os.Args) != 2 {
-	// 	fmt.Println("Uso:", os.Args[0], "<maquina>")
-	// 	return
-	// }
-	// porta := 1234
-	// maquina := os.Args[1]
-	client, err := rpc.Dial("tcp", "192.168.0.30:1234") /*("tcp", fmt.Sprintf("%s:%d", maquina, porta))*/
+	if len(os.Args) != 2 {
+		fmt.Println("Uso:", os.Args[0], "<maquina>")
+		return
+	}
+	porta := 1234
+	maquina := os.Args[1]
+	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta)) /*("tcp", "192.168.0.30:1234")*/
 	if err != nil {
 		fmt.Println("Erro ao conectar ao servidor:", err)
 		return
