@@ -10,6 +10,7 @@ import (
 var contas_novas = []string{"Bruno", "Sofia", "Izis", "Enzo", "Carlos", "Gabriel"}
 var contas_antigas = []string{"Maria", "Pedro", "Joao", "Alexandre", "Barbara", "Paulo"}
 
+// Estrurura wait para Goroutines
 var wg sync.WaitGroup
 
 type Conta struct {
@@ -17,6 +18,7 @@ type Conta struct {
 	Saldo float64
 }
 
+// Metodo de verificação do saldo disponivel para um nome
 func SALDO(nome string, cliente *rpc.Client) {
 	var resposta string
 	var err = cliente.Call("Servidor.ObtemSaldo", nome, &resposta)
@@ -28,6 +30,7 @@ func SALDO(nome string, cliente *rpc.Client) {
 	wg.Done()
 }
 
+// Metodo de Abrir conta
 func ABRIR(nome string, cliente *rpc.Client) {
 	var resposta string
 	var err = cliente.Call("Servidor.AbrirConta", nome, &resposta)
@@ -39,6 +42,8 @@ func ABRIR(nome string, cliente *rpc.Client) {
 	wg.Done()
 
 }
+
+// Metodo de Fechar  conta
 func FECHAR(nome string, client *rpc.Client) {
 	var resposta string
 	var err = client.Call("Servidor.FecharConta", nome, &resposta)
@@ -51,6 +56,7 @@ func FECHAR(nome string, client *rpc.Client) {
 
 }
 
+// Metodo de Depositar em conta
 func DEPOSITO(nome string, client *rpc.Client) {
 	var resposta string
 	var err = client.Call("Servidor.Deposito", Conta{Nome: nome, Saldo: 200}, &resposta)
@@ -62,6 +68,8 @@ func DEPOSITO(nome string, client *rpc.Client) {
 	wg.Done()
 
 }
+
+// Metodo de saque em conta
 func SAQUE(nome string, client *rpc.Client) {
 	var resposta string
 	var err = client.Call("Servidor.Saque", Conta{Nome: nome, Saldo: 100}, &resposta)
