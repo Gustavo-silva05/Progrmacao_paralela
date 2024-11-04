@@ -34,14 +34,18 @@ func (s *Servidor) inicializar() {
 
 // Método remoto que retorna o saldo de um cliente dado o seu nome
 func (s *Servidor) ObtemSaldo(nome string, resposta *string) error {
+	mutex.Lock()
 	for _, conta := range s.contas {
 		if conta.Nome == nome {
 			fmt.Println("Saldo verificado para ", nome)
 			*resposta = fmt.Sprintf("Conta de %s com R$ %g", nome, conta.Saldo)
+			mutex.Unlock()
 			return nil
 		}
 	}
+	mutex.Unlock()
 	return fmt.Errorf("Aluno %s não encontrado", nome)
+
 }
 
 func (s *Servidor) AbrirConta(nome string, resposta *string) error {
@@ -50,10 +54,10 @@ func (s *Servidor) AbrirConta(nome string, resposta *string) error {
 		if conta.Nome == nome {
 			fmt.Println("Conta existente para ", nome)
 			*resposta = fmt.Sprintf("Conta com ", nome, "ja existe")
+			mutex.Unlock()
 			return fmt.Errorf("conta com nome %s encontrada", nome)
 		}
 	}
-	mutex.Unlock()
 	conta := Conta{
 		Nome:  nome,
 		Saldo: 0.0,
@@ -61,6 +65,7 @@ func (s *Servidor) AbrirConta(nome string, resposta *string) error {
 	s.contas = append(s.contas, conta)
 	fmt.Println("Conta criada para ", nome)
 	*resposta = fmt.Sprintf("Conta de %s criada com sucesso!", nome)
+	mutex.Unlock()
 	return nil
 }
 
@@ -68,7 +73,6 @@ func (s *Servidor) FecharConta(nome string, resposta *string) error {
 	mutex.Lock()
 	for i, a := range s.contas {
 		if a.Nome == nome {
-			mutex.Lock()
 			// Remove a conta da lista
 			fmt.Println("Conta excluida de ", nome)
 			*resposta = fmt.Sprintf("Conta removida com sucesso e saldo devolvido = %g", a.Saldo)
@@ -84,10 +88,9 @@ func (s *Servidor) FecharConta(nome string, resposta *string) error {
 }
 
 func (s *Servidor) Deposito(conta Conta, resposta *string) error {
-
+	mutex.Lock()
 	for i, a := range s.contas {
 		if a.Nome == conta.Nome {
-			mutex.Lock()
 			s.contas[i].Saldo += conta.Saldo
 			fmt.Println("Desposito Realizado com sucesso ")
 			*resposta = fmt.Sprintf("Deposito de %g feito, novo saldo de %s = %g", conta.Saldo, conta.Nome, s.contas[i].Saldo)
@@ -96,14 +99,14 @@ func (s *Servidor) Deposito(conta Conta, resposta *string) error {
 		}
 	}
 	*resposta = "Conta não encontrada."
+	mutex.Unlock()
 	return fmt.Errorf("conta com nome %s não encontrada", conta.Nome)
 }
 
 func (s *Servidor) Saque(conta Conta, resposta *string) error {
-
+	mutex.Lock()
 	for i, a := range s.contas {
 		if a.Nome == conta.Nome {
-			mutex.Lock()
 			s.contas[i].Saldo -= conta.Saldo
 			fmt.Println("Saque Realizado com sucesso ")
 			*resposta = fmt.Sprintf("Saque de %g feito, novo saldo de %s = %g", conta.Saldo, conta.Nome, s.contas[i].Saldo)
@@ -112,6 +115,7 @@ func (s *Servidor) Saque(conta Conta, resposta *string) error {
 		}
 	}
 	*resposta = "Conta não encontrada."
+	mutex.Unlock()
 	return fmt.Errorf("conta com nome %s não encontrada", conta.Nome)
 }
 

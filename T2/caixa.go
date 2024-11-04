@@ -29,27 +29,6 @@ func SALDO(nome string, porta int, maquina string, cliente *rpc.Client) {
 
 }
 
-func ABRIR(nome string, porta int, maquina string, cliente *rpc.Client) {
-	var resposta string
-	var err = cliente.Call("Servidor.AbrirConta", nome, &resposta)
-	if err != nil {
-		fmt.Println("Erro ao abrir conta:", err)
-	} else {
-		fmt.Println("Resposta do servidor:", resposta)
-	}
-
-}
-func FECHAR(nome string, porta int, maquina string, client *rpc.Client) {
-	var resposta string
-	var err = client.Call("Servidor.FecharConta", nome, &resposta)
-	if err != nil {
-		fmt.Println("Erro ao fechar conta:", err)
-	} else {
-		fmt.Println("Resposta do servidor:", resposta)
-	}
-
-}
-
 func DEPOSITO(nome string, porta int, maquina string, client *rpc.Client) {
 	var resposta string
 	var err = client.Call("Servidor.Deposito", Conta{Nome: nome, Saldo: 200}, &resposta)
@@ -102,9 +81,9 @@ func main() {
 	wg.Wait()
 	for i := 0; i < len(contas_antigas); i++ {
 		wg.Add(1)
-		SALDO(contas_antigas[i], porta, maquina, client)
+		go SALDO(contas_antigas[i], porta, maquina, client)
 		wg.Add(1)
-		SALDO(contas_novas[i], porta, maquina, client)
+		go SALDO(contas_novas[i], porta, maquina, client)
 	}
 	wg.Wait()
 
