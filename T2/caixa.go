@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/rpc"
-	"os"
 	"sync"
 )
 
@@ -17,19 +16,18 @@ type Conta struct {
 	Saldo float64
 }
 
-func SALDO(nome string, porta int, maquina string, cliente *rpc.Client) {
+func SALDO(nome string, cliente *rpc.Client) {
 	var resposta string
 	var err = cliente.Call("Servidor.ObtemSaldo", nome, &resposta)
 	if err != nil {
 		fmt.Println("Erro ao ver saldo conta:", err)
 	} else {
-		fmt.Println("Resposta do servidor", resposta)
+		fmt.Println("Resposta do servidor:", resposta)
 	}
 	wg.Done()
-
 }
 
-func DEPOSITO(nome string, porta int, maquina string, client *rpc.Client) {
+func DEPOSITO(nome string, client *rpc.Client) {
 	var resposta string
 	var err = client.Call("Servidor.Deposito", Conta{Nome: nome, Saldo: 200}, &resposta)
 	if err != nil {
@@ -40,7 +38,7 @@ func DEPOSITO(nome string, porta int, maquina string, client *rpc.Client) {
 	wg.Done()
 
 }
-func SAQUE(nome string, porta int, maquina string, client *rpc.Client) {
+func SAQUE(nome string, client *rpc.Client) {
 	var resposta string
 	var err = client.Call("Servidor.Saque", Conta{Nome: nome, Saldo: 100}, &resposta)
 	if err != nil {
@@ -53,13 +51,13 @@ func SAQUE(nome string, porta int, maquina string, client *rpc.Client) {
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Uso:", os.Args[0], "<maquina>")
-		return
-	}
-	porta := 1234
-	maquina := os.Args[1]
-	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta))
+	// if len(os.Args) != 2 {
+	// 	fmt.Println("Uso:", os.Args[0], "<maquina>")
+	// 	return
+	// }
+	// porta := 1234
+	// maquina := os.Args[1]
+	client, err := rpc.Dial("tcp", "192.168.0.30:1234") /*("tcp", fmt.Sprintf("%s:%d", maquina, porta))*/
 	if err != nil {
 		fmt.Println("Erro ao conectar ao servidor:", err)
 		return
@@ -68,22 +66,22 @@ func main() {
 
 	for i := 0; i < len(contas_antigas); i++ {
 		wg.Add(1)
-		go DEPOSITO(contas_novas[i], porta, maquina, client)
+		go DEPOSITO(contas_novas[i], client)
 		wg.Add(1)
-		go DEPOSITO(contas_antigas[i], porta, maquina, client)
+		go DEPOSITO(contas_antigas[i], client)
 	}
 	for i := 0; i < len(contas_antigas); i++ {
 		wg.Add(1)
-		go SAQUE(contas_antigas[i], porta, maquina, client)
+		go SAQUE(contas_antigas[i], client)
 		wg.Add(1)
-		go SAQUE(contas_novas[i], porta, maquina, client)
+		go SAQUE(contas_novas[i], client)
 	}
 	wg.Wait()
 	for i := 0; i < len(contas_antigas); i++ {
 		wg.Add(1)
-		go SALDO(contas_antigas[i], porta, maquina, client)
+		go SALDO(contas_antigas[i], client)
 		wg.Add(1)
-		go SALDO(contas_novas[i], porta, maquina, client)
+		go SALDO(contas_novas[i], client)
 	}
 	wg.Wait()
 
