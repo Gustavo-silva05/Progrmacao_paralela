@@ -5,8 +5,7 @@ import (
 	"net/rpc"
 	"os"
 	"sync"
-
-	"github.com/google/uuid"
+	"uuid-master"
 )
 
 func gerarIDOperacao() string {
@@ -28,7 +27,7 @@ type Conta struct {
 func SALDO(nome string, cliente *rpc.Client) {
 	var resposta string
 	args := []string{nome, gerarIDOperacao()}
-	var err = cliente.Call("Servidor.ObtemSaldo", nome, &resposta)
+	var err = cliente.Call("Servidor.ObtemSaldo", args, &resposta)
 	if err != nil {
 		fmt.Println("Erro ao ver saldo conta:", err)
 	} else {
@@ -40,7 +39,8 @@ func SALDO(nome string, cliente *rpc.Client) {
 // Metodo de Abrir conta
 func ABRIR(nome string, cliente *rpc.Client) {
 	var resposta string
-	var err = cliente.Call("Servidor.AbrirConta", nome, &resposta)
+	args := []string{nome, gerarIDOperacao()}
+	var err = cliente.Call("Servidor.AbrirConta", args, &resposta)
 	if err != nil {
 		fmt.Println("Erro ao abrir conta:", err)
 	} else {
@@ -53,7 +53,8 @@ func ABRIR(nome string, cliente *rpc.Client) {
 // Metodo de Fechar  conta
 func FECHAR(nome string, client *rpc.Client) {
 	var resposta string
-	var err = client.Call("Servidor.FecharConta", nome, &resposta)
+	args := []string{nome, gerarIDOperacao()}
+	var err = client.Call("Servidor.FecharConta", args, &resposta)
 	if err != nil {
 		fmt.Println("Erro ao fechar conta:", err)
 	} else {
@@ -66,7 +67,9 @@ func FECHAR(nome string, client *rpc.Client) {
 // Metodo de Depositar em conta
 func DEPOSITO(nome string, client *rpc.Client) {
 	var resposta string
-	var err = client.Call("Servidor.Deposito", Conta{Nome: nome, Saldo: 200}, &resposta)
+	var val = "200.0"
+	args := []string{nome, val, gerarIDOperacao()}
+	var err = client.Call("Servidor.Deposito", args, &resposta)
 	if err != nil {
 		fmt.Println("Erro no deposito conta:", err)
 	} else {
@@ -79,7 +82,9 @@ func DEPOSITO(nome string, client *rpc.Client) {
 // Metodo de saque em conta
 func SAQUE(nome string, client *rpc.Client) {
 	var resposta string
-	var err = client.Call("Servidor.Saque", Conta{Nome: nome, Saldo: 100}, &resposta)
+	var val = "100.0"
+	args := []string{nome, val, gerarIDOperacao()}
+	var err = client.Call("Servidor.Saque", args, &resposta)
 	if err != nil {
 		fmt.Println("Erro no saque conta:", err)
 	} else {
