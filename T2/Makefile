@@ -6,7 +6,7 @@ all:
 
 
 clean_linux:
-			rm notas_client notas_server
+			rm client server caixa
 
 clean_win:
 			del *.exe
