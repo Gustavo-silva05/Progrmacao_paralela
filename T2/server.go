@@ -44,16 +44,16 @@ func (s *Servidor) ObtemSaldo(args []string, resposta *string) error {
 		return nil // Operação já foi processada
 	}
 
-	// mutex.Lock()
+	mutex.Lock()
 	for _, conta := range s.contas {
 		if conta.Nome == nome {
 			fmt.Println("Saldo verificado para ", nome)
 			*resposta = fmt.Sprintf("Conta de %s com R$ %g", nome, conta.Saldo)
-			// mutex.Unlock()
+			mutex.Unlock()
 			return nil
 		}
 	}
-	// mutex.Unlock()
+	mutex.Unlock()
 	return fmt.Errorf("Aluno %s não encontrado", nome)
 
 }
@@ -96,19 +96,19 @@ func (s *Servidor) FecharConta(args []string, resposta *string) error {
 		*resposta = resultado
 		return nil // Operação já foi processada
 	}
-	// mutex.Lock()
+	mutex.Lock()
 	for i, a := range s.contas {
 		if a.Nome == nome {
 			// Remove a conta da lista
 			fmt.Println("Conta excluida de ", nome)
 			*resposta = fmt.Sprintf("Conta removida com sucesso e saldo devolvido = %g", a.Saldo)
 			s.contas = append(s.contas[:i], s.contas[i+1:]...)
-			// mutex.Unlock()
+			mutex.Unlock()
 			return nil
 
 		}
 	}
-	// mutex.Unlock()
+	mutex.Unlock()
 	*resposta = "Conta não encontrada."
 	return fmt.Errorf("conta com nome %s não encontrada", nome)
 }
@@ -136,7 +136,7 @@ func (s *Servidor) Deposito(args []string, resposta *string) error {
 			return nil
 		}
 	}
-	*resposta = "Conta não encontrada."
+	fmt.Println("Erro no deposito de %d ", nome)
 	// mutex.Unlock()
 	return fmt.Errorf("conta com nome %s não encontrada", nome)
 }
@@ -163,7 +163,7 @@ func (s *Servidor) Saque(args []string, resposta *string) error {
 			return nil
 		}
 	}
-	*resposta = "Conta não encontrada."
+	fmt.Println("Erro no deposito de %d ", nome)
 	// mutex.Unlock()
 	return fmt.Errorf("conta com nome %s não encontrada", nome)
 }

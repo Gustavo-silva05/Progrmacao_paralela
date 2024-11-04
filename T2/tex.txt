@@ -1,0 +1,458 @@
+package main
+
+import (
+	"fmt"
+	"net"
+	"net/rpc"
+	"strconv"
+	"sync"
+)
+
+var mutex sync.Mutex
+
+// Estrutura para representar um aluno
+type Conta struct {
+	Nome  string
+	Saldo float64
+}
+
+// Estrutura para o servidor
+type Servidor struct {
+	contas              []Conta
+	operacoesRealizadas map[string]string
+}
+
+// Método para inicializar a lista de alunos no servidor
+func (s *Servidor) inicializar() {
+	s.contas = []Conta{
+		{"Alexandre", 900.5},
+		{"Barbara", 855.5},
+		{"Joao", 656.5},
+		{"Maria", 946.0},
+		{"Paulo", 10546.0},
+		{"Pedro", 7465.0},
+	}
+}
+
+// Método remoto que retorna o saldo de um cliente dado o seu nome
+func (s *Servidor) ObtemSaldo(args []string, resposta *string) error {
+	nome := args[0]
+	idOperacao := args[1]
+
+	if resultado, existe := s.operacoesRealizadas[idOperacao]; existe {
+		*resposta = resultado
+		return nil // Operação já foi processada
+	}
+
+	// mutex.Lock()
+	for _, conta := range s.contas {
+		if conta.Nome == nome {
+			fmt.Println("Saldo verificado para ", nome)
+			*resposta = fmt.Sprintf("Conta de %s com R$ %g", nome, conta.Saldo)
+			// mutex.Unlock()
+			return nil
+		}
+	}
+	// mutex.Unlock()
+	return fmt.Errorf("Aluno %s não encontrado", nome)
+
+}
+
+func (s *Servidor) AbrirConta(args []string, resposta *string) error {
+
+	nome := args[0]
+	idOperacao := args[1]
+
+	if resultado, existe := s.operacoesRealizadas[idOperacao]; existe {
+		*resposta = resultado
+		return nil // Operação já foi processada
+	}
+
+	// mutex.Lock()
+	for _, conta := range s.contas {
+		if conta.Nome == nome {
+			fmt.Println("Conta existente para ", nome)
+			*resposta = fmt.Sprintf("Conta com ", nome, "ja existe")
+			// mutex.Unlock()
+			return fmt.Errorf("conta com nome %s encontrada", nome)
+		}
+	}
+	conta := Conta{
+		Nome:  nome,
+		Saldo: 0.0,
+	}
+	s.contas = append(s.contas, conta)
+	fmt.Println("Conta criada para ", nome)
+	*resposta = fmt.Sprintf("Conta de %s criada com sucesso!", nome)
+	// mutex.Unlock()
+	return nil
+}
+
+func (s *Servidor) FecharConta(args []string, resposta *string) error {
+	nome := args[0]
+	idOperacao := args[1]
+
+	if resultado, existe := s.operacoesRealizadas[idOperacao]; existe {
+		*resposta = resultado
+		return nil // Operação já foi processada
+	}
+	// mutex.Lock()
+	for i, a := range s.contas {
+		if a.Nome == nome {
+			// Remove a conta da lista
+			fmt.Println("Conta excluida de ", nome)
+			*resposta = fmt.Sprintf("Conta removida com sucesso e saldo devolvido = %g", a.Saldo)
+			s.contas = append(s.contas[:i], s.contas[i+1:]...)
+			// mutex.Unlock()
+			return nil
+
+		}
+	}
+	// mutex.Unlock()
+	*resposta = "Conta não encontrada."
+	return fmt.Errorf("conta com nome %s não encontrada", nome)
+}
+
+func (s *Servidor) Deposito(args []string, resposta *string) error {
+	nome := args[0]
+	idOperacao := args[2]
+	saldo, err := strconv.ParseFloat(args[1], 64)
+	if err != nil {
+		fmt.Println("Saldo inválido:", err)
+		return fmt.Errorf("Valor invalido = ", nome)
+	}
+	if resultado, existe := s.operacoesRealizadas[idOperacao]; existe {
+		*resposta = resultado
+		return nil // Operação já foi processada
+	}
+
+	// mutex.Lock()
+	for i, a := range s.contas {
+		if a.Nome == nome {
+			s.contas[i].Saldo += saldo
+			fmt.Println("Desposito Realizado com sucesso ")
+			*resposta = fmt.Sprintf("Deposito de %g feito, novo saldo de %s = %g", saldo, nome, s.contas[i].Saldo)
+			// mutex.Unlock()
+			return nil
+		}
+	}
+	*resposta = "Conta não encontrada."
+	// mutex.Unlock()
+	return fmt.Errorf("conta com nome %s não encontrada", nome)
+}
+
+func (s *Servidor) Saque(args []string, resposta *string) error {
+	nome := args[0]
+	idOperacao := args[1]
+	saldo, err := strconv.ParseFloat(args[1], 64)
+	if err != nil {
+		fmt.Println("Saldo inválido:", err)
+		return fmt.Errorf("Valor invalido = ", nome)
+	}
+	if resultado, existe := s.operacoesRealizadas[idOperacao]; existe {
+		*resposta = resultado
+		return nil // Operação já foi processada
+	}
+	// mutex.Lock()
+	for i, a := range s.contas {
+		if a.Nome == nome {
+			s.contas[i].Saldo -= saldo
+			fmt.Println("Saque Realizado com sucesso ")
+			*resposta = fmt.Sprintf("Saque de %g feito, novo saldo de %s = %g", saldo, nome, s.contas[i].Saldo)
+			// mutex.Unlock()
+			return nil
+		}
+	}
+	*resposta = "Conta não encontrada."
+	// mutex.Unlock()
+	return fmt.Errorf("conta com nome %s não encontrada", nome)
+}
+
+func main() {
+	porta := 1234
+	servidor := new(Servidor)
+	servidor.inicializar()
+	rpc.Register(servidor)
+	l, err := net.Listen("tcp", "0.0.0.0:1234")
+	if err != nil {
+		fmt.Println("Erro ao iniciar o servidor:", err)
+		return
+	}
+
+	fmt.Println("Servidor aguardando conexões na porta", porta)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Erro ao aceitar conexão:", err)
+			continue
+		}
+		go rpc.ServeConn(conn)
+	}
+}
+
+package main
+
+import (
+	"fmt"
+	"net/rpc"
+	"os"
+	"sync"
+	"uuid-master"
+)
+
+func gerarIDOperacao() string {
+	return uuid.New().String()
+}
+
+var contas_novas = []string{"Bruno", "Sofia", "Izis", "Enzo", "Carlos", "Gabriel"}
+var contas_antigas = []string{"Maria", "Pedro", "Joao", "Alexandre", "Barbara", "Paulo"}
+
+// Estrurura wait para Goroutines
+var wg sync.WaitGroup
+
+type Conta struct {
+	Nome  string
+	Saldo float64
+}
+
+// Metodo de verificação do saldo disponivel para um nome
+func SALDO(nome string, cliente *rpc.Client) {
+	var resposta string
+	args := []string{nome, gerarIDOperacao()}
+	var err = cliente.Call("Servidor.ObtemSaldo", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro ao ver saldo conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+}
+
+// Metodo de Abrir conta
+func ABRIR(nome string, cliente *rpc.Client) {
+	var resposta string
+	args := []string{nome, gerarIDOperacao()}
+	var err = cliente.Call("Servidor.AbrirConta", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro ao abrir conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+
+}
+
+// Metodo de Fechar  conta
+func FECHAR(nome string, client *rpc.Client) {
+	var resposta string
+	args := []string{nome, gerarIDOperacao()}
+	var err = client.Call("Servidor.FecharConta", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro ao fechar conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+
+}
+
+// Metodo de Depositar em conta
+func DEPOSITO(nome string, client *rpc.Client) {
+	var resposta string
+	var val = "200.0"
+	args := []string{nome, val, gerarIDOperacao()}
+	var err = client.Call("Servidor.Deposito", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro no deposito conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+
+}
+
+// Metodo de saque em conta
+func SAQUE(nome string, client *rpc.Client) {
+	var resposta string
+	var val = "100.0"
+	args := []string{nome, val, gerarIDOperacao()}
+	var err = client.Call("Servidor.Saque", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro no saque conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+
+}
+
+func main() {
+	if len(os.Args) != 2 {
+		fmt.Println("Uso:", os.Args[0], "<maquina>")
+		return
+	}
+	porta := 1234
+	maquina := os.Args[1]
+	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta))
+	if err != nil {
+		fmt.Println("Erro ao conectar ao servidor:", err)
+		return
+	}
+	defer client.Close()
+
+	for i := 0; i < len(contas_antigas); i++ {
+		wg.Add(1)
+		go DEPOSITO(contas_novas[i], client)
+		wg.Add(1)
+		go DEPOSITO(contas_antigas[i], client)
+	}
+	for i := 0; i < len(contas_antigas); i++ {
+		wg.Add(1)
+		go SAQUE(contas_antigas[i], client)
+		wg.Add(1)
+		go SAQUE(contas_novas[i], client)
+	}
+	wg.Wait()
+	for i := 0; i < len(contas_antigas); i++ {
+		wg.Add(1)
+		go SALDO(contas_antigas[i], client)
+		wg.Add(1)
+		go SALDO(contas_novas[i], client)
+	}
+	wg.Wait()
+
+}
+
+package main
+
+import (
+	"fmt"
+	"net/rpc"
+	"os"
+	"sync"
+	"uuid-master"
+)
+
+func gerarIDOperacao() string {
+	return uuid.New().String()
+}
+
+var contas_novas = []string{"Bruno", "Sofia", "Izis", "Enzo", "Carlos", "Gabriel"}
+var contas_antigas = []string{"Maria", "Pedro", "Joao", "Alexandre", "Barbara", "Paulo"}
+
+// Estrurura wait para Goroutines
+var wg sync.WaitGroup
+
+type Conta struct {
+	Nome  string
+	Saldo float64
+}
+
+// Metodo de verificação do saldo disponivel para um nome
+func SALDO(nome string, cliente *rpc.Client) {
+	var resposta string
+	args := []string{nome, gerarIDOperacao()}
+	var err = cliente.Call("Servidor.ObtemSaldo", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro ao ver saldo conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+}
+
+// Metodo de Abrir conta
+func ABRIR(nome string, cliente *rpc.Client) {
+	var resposta string
+	args := []string{nome, gerarIDOperacao()}
+	var err = cliente.Call("Servidor.AbrirConta", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro ao abrir conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+
+}
+
+// Metodo de Fechar  conta
+func FECHAR(nome string, client *rpc.Client) {
+	var resposta string
+	args := []string{nome, gerarIDOperacao()}
+	var err = client.Call("Servidor.FecharConta", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro ao fechar conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+
+}
+
+// Metodo de Depositar em conta
+func DEPOSITO(nome string, client *rpc.Client) {
+	var resposta string
+	var val = "200.0"
+	args := []string{nome, val, gerarIDOperacao()}
+	var err = client.Call("Servidor.Deposito", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro no deposito conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+
+}
+
+// Metodo de saque em conta
+func SAQUE(nome string, client *rpc.Client) {
+	var resposta string
+	var val = "100.0"
+	args := []string{nome, val, gerarIDOperacao()}
+	var err = client.Call("Servidor.Saque", args, &resposta)
+	if err != nil {
+		fmt.Println("Erro no saque conta:", err)
+	} else {
+		fmt.Println("Resposta do servidor:", resposta)
+	}
+	wg.Done()
+
+}
+
+func main() {
+	if len(os.Args) != 2 {
+		fmt.Println("Uso:", os.Args[0], "<maquina>")
+		return
+	}
+	porta := 1234
+	maquina := os.Args[1]
+	client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%d", maquina, porta))
+	if err != nil {
+		fmt.Println("Erro ao conectar ao servidor:", err)
+		return
+	}
+	defer client.Close()
+
+	for i := 0; i < len(contas_novas); i++ {
+		wg.Add(1)
+		go ABRIR(contas_novas[i], client)
+	}
+	wg.Wait()
+	for i := 0; i < len(contas_antigas); i++ {
+		wg.Add(1)
+		go DEPOSITO(contas_novas[i], client)
+		wg.Add(1)
+		go DEPOSITO(contas_antigas[i], client)
+	}
+	for i := 0; i < len(contas_antigas); i++ {
+		wg.Add(1)
+		go SAQUE(contas_antigas[i], client)
+		wg.Add(1)
+		go SAQUE(contas_novas[i], client)
+	}
+	wg.Wait()
+	// for i := 0; i < 3; i++ {
+	// 	FECHAR(contas_antigas[i], client)
+	// }
+
+}
