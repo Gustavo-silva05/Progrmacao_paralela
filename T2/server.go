@@ -45,6 +45,7 @@ func (s *Servidor) ObtemSaldo(nome string, resposta *string) error {
 }
 
 func (s *Servidor) AbrirConta(nome string, resposta *string) error {
+	mutex.Lock()
 	for _, conta := range s.contas {
 		if conta.Nome == nome {
 			fmt.Println("Conta existente para ", nome)
@@ -52,6 +53,7 @@ func (s *Servidor) AbrirConta(nome string, resposta *string) error {
 			return fmt.Errorf("conta com nome %s encontrada", nome)
 		}
 	}
+	mutex.Unlock()
 	conta := Conta{
 		Nome:  nome,
 		Saldo: 0.0,

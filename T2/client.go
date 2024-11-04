@@ -46,6 +46,7 @@ func FECHAR(nome string, porta int, maquina string, client *rpc.Client) {
 	} else {
 		fmt.Println("Resposta do servidor:", resposta)
 	}
+	wg.Done()
 
 }
 
@@ -87,7 +88,8 @@ func main() {
 	defer client.Close()
 
 	for i := 0; i < len(contas_novas); i++ {
-		ABRIR(contas_novas[i], porta, maquina, client)
+		wg.Add(1)
+		go ABRIR(contas_novas[i], porta, maquina, client)
 	}
 	for i := 0; i < len(contas_antigas); i++ {
 		wg.Add(1)
