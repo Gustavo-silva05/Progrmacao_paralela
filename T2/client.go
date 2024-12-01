@@ -61,7 +61,6 @@ func FECHAR(nome string, client *rpc.Client) {
 		fmt.Println("Resposta do servidor:", resposta)
 	}
 	wg.Done()
-
 }
 
 // Metodo de Depositar em conta
